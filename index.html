@@ -133,7 +133,10 @@
 
 
     // 4. Helper to create a Store Item Button
-    function createStoreItem(name, price, iconImg, flavorTxt, index) {
+    function createStoreItem(name, price, creditsPerSecond, iconImg, flavorTxt, index) {
+        itemTracker[index].cost = price
+        itemTracker[index].creditsPerSecond = creditsPerSecond
+
         const height = 100;
         const padding = 10;
         
@@ -194,8 +197,18 @@
             top: 20
         });
 
+        // per second
+        const cpsText = new fabric.Text(`${creditsPerSecond}/s`, {
+            fontFamily: 'Arial',
+            fontSize: 12,
+            fontStyle: "bold",
+            fill: '#66cdaa',
+            left: 0,
+            top: 0
+        });
+
         // Group them
-        const group = new fabric.Group([bg, icon, nameText, priceText, flavorText, countText], {
+        const group = new fabric.Group([bg, icon, nameText, priceText, flavorText, countText, cpsText], {
             left: 0, // Set in layout
             top: 0,  // Set in layout
             selectable: false, // LOCKED: User can't move the button
@@ -222,7 +235,11 @@
         });
         group.on('mouseup', () => {
             bg.set('fill', COLORS.storeHover);
+            // increase count
             countText.set('text', `x${++itemTracker[index].count}`)
+            // increase cost
+            itemTracker[index].cost = Math.ceil(itemTracker[index].cost * 1.15)
+            priceText.set('text', `📝 ${itemTracker[index].cost}`)
             canvas.requestRenderAll();
         });
 
@@ -413,11 +430,11 @@
         setupMainClicker(assets.images["wolvey"]);
 
         // Create some dummy store items
-        createStoreItem("ROOT", 15, assets.images["meme1"], "I have become ROOTS Eternal", 0);
-        createStoreItem("MEME2", 100, assets.images["meme2"], "funny quote", 1);
-        createStoreItem("MEME3", 1100, assets.images["meme3"], "funny quote", 2);
-        createStoreItem("MEME4", 12000, assets.images["meme4"], "funny quote", 3);
-        createStoreItem("MEME5", 130000, assets.images["meme5"], "funny quote", 4);
+        createStoreItem("ROOT", 15, 0.1, assets.images["meme1"], "I have become ROOTS Eternal", 0);
+        createStoreItem("MEME2", 100, 1, assets.images["meme2"], "funny quote", 1);
+        createStoreItem("MEME3", 1100, 8, assets.images["meme3"], "funny quote", 2);
+        createStoreItem("MEME4", 12000, 47, assets.images["meme4"], "funny quote", 3);
+        createStoreItem("MEME5", 130000, 260, assets.images["meme5"], "funny quote", 4);
         renderLayout();
     })
     // Listen to resize

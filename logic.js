@@ -1,9 +1,9 @@
 let mdpCount = 0;
 let creditsPerClick = 1;
-let totalCreditsPerSecond = 0;
 
 let _itemTemplate = {
     count: 0,
+    cost: 1,
     creditsPerSecond: 1
 }
 
