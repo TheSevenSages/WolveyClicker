@@ -50,14 +50,12 @@
     // --- OBJECT CREATION ---
 
     // 1. Background Panels (Visual separation)
-    const panelLeft = new fabric.Rect({ left: 0, top: 0, fill: COLORS.leftBg, selectable: false, evented: false });
     const panelMid = new fabric.Rect({ left: 0, top: 0, fill: COLORS.midBg, selectable: false, evented: false });
     const panelRight = new fabric.Rect({ left: 0, top: 0, fill: COLORS.rightBg, selectable: false, evented: false });
     // Divider lines
-    const div1 = new fabric.Rect({ top: 0, width: 6, fill: 'rgba(0,0,0,0.5)', selectable: false, evented: false });
     const div2 = new fabric.Rect({ top: 0, width: 6, fill: 'rgba(0,0,0,0.5)', selectable: false, evented: false });
 
-    canvas.add(panelLeft, panelMid, panelRight, div1, div2);
+    canvas.add(panelMid, panelRight, div2);
 
     // 2. Score Text
     const scoreLabel = new fabric.Text('0 MDP Credits', {
@@ -79,7 +77,7 @@
     });
     canvas.add(scoreLabel, cpsLabel);
 
-        // 3. Store Title
+    // 3. Store Title
     const storeTitle = new fabric.Text('STORE', {
         fontFamily: 'Arial, sans-serif',
         fontSize: 24,
@@ -90,7 +88,7 @@
     });
     canvas.add(storeTitle);
 
-        // 4. Helper to create a Store Item Button
+    // 4. Helper to create a Store Item Button
     function createStoreItem(name, price, iconEmoji, index) {
         const height = 80;
         const padding = 10;
@@ -167,7 +165,7 @@
     }
 
     // Create some dummy store items
-    createStoreItem("ROOTS", 15, "👆", 0);
+    createStoreItem("MEME1", 15, "👆", 0);
     createStoreItem("MEME2", 100, "👵", 1);
     createStoreItem("MEME3", 1100, "🚜", 2);
     createStoreItem("MEME4", 12000, "⛏️", 3);
@@ -279,11 +277,9 @@
         const rightW = w * 0.25;
         
         // 3. Position Backgrounds
-        panelLeft.set({ width: leftW, height: h });
-        panelMid.set({ left: leftW, width: midW, height: h });
+        panelMid.set({ width: midW + leftW, height: h });
         panelRight.set({ left: leftW + midW, width: rightW, height: h });
         
-        div1.set({ left: leftW, height: h });
         div2.set({ left: leftW + midW, height: h });
 
         // 4. Position Cookie (Center of Left Panel)
@@ -291,7 +287,7 @@
             const wolveySize = Math.min(leftW, h) * 0.6; // 60% of the smaller dimension
             const scale = wolveySize / assets.wolvey.width;
             assets.wolvey.set({
-                left: leftW / 2,
+                left: (leftW + midW) / 2,
                 top: h / 2,
                 scaleX: scale,
                 scaleY: scale
@@ -301,12 +297,12 @@
 
         // 5. Position Score (Above Cookie)
         scoreLabel.set({
-            left: leftW / 2,
+            left: (leftW + midW) / 2,
             originX: 'center',
             top: h * 0.15
         });
         cpsLabel.set({
-            left: leftW / 2,
+            left: (leftW + midW) / 2,
             originX: 'center',
             top: h * 0.15 + 50
         });
