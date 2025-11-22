@@ -30,14 +30,20 @@
         backgroundColor: '#000000'
     });
 
-    const assetUrls = [
-        'images.png'
-    ];
+    const assetUrls = {
+        wolvey: 'images.png',
+        meme1: 'images.png',
+        meme2: 'images.png',
+        meme3: 'images.png',
+        meme4: 'images.png',
+        meme5: 'images.png'
+    };
 
     // Game State
     const assets = {
         wolvey: null,
-        storeItems: []
+        storeItems: [],
+        images: {}
     };
 
     // UI Constants
@@ -55,31 +61,32 @@
      * Preloads a list of images so they are cached and ready to use.
      * @param {string[]} urls - An array of image strings/URLs.
      */
-    function preloadAssets(urls) {
-        const promises = urls.map(url => {
-            return new Promise((resolve, reject) => {
+    // --- 1. PRELOADER UTILITY (UPDATED) ---
+    function preloadAssets(assetsToLoad) {
+        // We map over the Keys now, not just a list of URLs
+        const promises = Object.keys(assetsToLoad).map(key => {
+            const url = assetsToLoad[key];
+            return new Promise((resolve) => {
                 const img = new Image();
                 img.src = url;
-                
-                // If loaded successfully, resolve with the image
-                img.onload = () => resolve({ url: url, success: true, element: img });
-                
-                // If failed, log it but still resolve (so one bad image doesn't break the whole game)
+                // We pass back the KEY so we know which image this is
+                img.onload = () => resolve({ key: key, success: true, element: img });
                 img.onerror = () => {
-                    console.warn(`Failed to load asset: ${url}`);
-                    resolve({ url: url, success: false, element: null });
+                    console.warn(`Failed to load asset '${key}': ${url}`);
+                    resolve({ key: key, success: false, element: null });
                 };
             });
         });
 
-        // Wait for ALL images to finish (success or failure)
         return Promise.all(promises).then(results => {
+            const loadedAssets = {};
             results.forEach(item => {
                 if (item.success) {
-                    // Store loaded image in a dictionary for easy access
-                    assets[item.url] = item.element; 
+                    // Reconstruct the object: { cookieIcon: <img element> }
+                    loadedAssets[item.key] = item.element;
                 }
             });
+            assets["images"] = loadedAssets;
         });
     }
 
@@ -139,7 +146,7 @@
             strokeWidth: 1
         });
 
-        const icon = new fabric.Image(assets[iconImg], {
+        const icon = new fabric.Image(iconImg, {
             crossOrigin: "anonymous",
             left: 10,
             top: 10,
@@ -215,7 +222,7 @@
 
     // Using the generated image ID or a placeholder
     function setupMainClicker(clickerImg) {
-        const fabricObj = new fabric.Image(assets[clickerImg], {
+        const fabricObj = new fabric.Image(clickerImg, {
             crossOrigin: "anonymous"
         })
         assets.wolvey = fabricObj;
@@ -375,14 +382,14 @@
         console.log("All assets finished loading!", loadedAssets);
 
         // Main Clicker
-        setupMainClicker("images.png");
+        setupMainClicker(assets.images["wolvey"]);
 
         // Create some dummy store items
-        createStoreItem("ROOT", 15, "images.png", "I have become ROOTS Eternal", 0);
-        createStoreItem("MEME2", 100, "images.png", "funny quote", 1);
-        createStoreItem("MEME3", 1100, "images.png", "funny quote", 2);
-        createStoreItem("MEME4", 12000, "images.png", "funny quote", 3);
-        createStoreItem("MEME5", 130000, "images.png", "funny quote", 4);
+        createStoreItem("ROOT", 15, assets.images["meme1"], "I have become ROOTS Eternal", 0);
+        createStoreItem("MEME2", 100, assets.images["meme2"], "funny quote", 1);
+        createStoreItem("MEME3", 1100, assets.images["meme3"], "funny quote", 2);
+        createStoreItem("MEME4", 12000, assets.images["meme4"], "funny quote", 3);
+        createStoreItem("MEME5", 130000, assets.images["meme5"], "funny quote", 4);
         renderLayout();
     })
 
