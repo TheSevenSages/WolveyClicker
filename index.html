@@ -47,6 +47,43 @@
         storeBg: '#1a232e'
     };
 
+    // 1. Define your list of assets here
+    const assetUrls = [
+        'images.png'
+    ];
+
+    /**
+     * Preloads a list of images so they are cached and ready to use.
+     * @param {string[]} urls - An array of image strings/URLs.
+     */
+    function preloadAssets(urls) {
+        const promises = urls.map(url => {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                img.src = url;
+                
+                // If loaded successfully, resolve with the image
+                img.onload = () => resolve({ url: url, success: true, element: img });
+                
+                // If failed, log it but still resolve (so one bad image doesn't break the whole game)
+                img.onerror = () => {
+                    console.warn(`Failed to load asset: ${url}`);
+                    resolve({ url: url, success: false, element: null });
+                };
+            });
+        });
+
+        // Wait for ALL images to finish (success or failure)
+        return Promise.all(promises).then(results => {
+            results.forEach(item => {
+                if (item.success) {
+                    // Store loaded image in a dictionary for easy access
+                    assets[item.url] = item.element; 
+                }
+            });
+        });
+    }
+
     // --- OBJECT CREATION ---
 
     // 1. Background Panels (Visual separation)
@@ -89,7 +126,7 @@
     canvas.add(storeTitle);
 
     // 4. Helper to create a Store Item Button
-    function createStoreItem(name, price, iconEmoji, index) {
+    function createStoreItem(name, price, iconImg, index) {
         const height = 80;
         const padding = 10;
         
@@ -104,11 +141,31 @@
         });
 
         // Icon (Emoji is easier than loading 10 images for a demo)
-        const icon = new fabric.Text(iconEmoji, {
-            fontSize: 40,
+        // var icon = null
+        // const _img = new Image()
+        // _img.src = iconImg
+        // _img.onload = function() {
+        //     // 3. Create Fabric Image from the native one
+        //     icon = new fabric.Image(_img, {
+        //         crossOrigin: "anonymous",
+        //         left: 10,
+        //         top: 10
+        //     });
+        // };
+        const icon = new fabric.Image(assets[iconImg], {
+            crossOrigin: "anonymous",
             left: 10,
-            top: 10
+            top: 10,
+            scaleX: 0.2,
+            scaleY: 0.2
         });
+        icon.setCoords()
+        
+        // const icon = new fabric.Text(iconImg, {
+        //     fontSize: 40,
+        //     left: 10,
+        //     top: 10
+        // });
 
         // Name
         const nameText = new fabric.Text(name, {
@@ -164,35 +221,13 @@
         canvas.add(group);
     }
 
-    // Create some dummy store items
-    createStoreItem("MEME1", 15, "👆", 0);
-    createStoreItem("MEME2", 100, "👵", 1);
-    createStoreItem("MEME3", 1100, "🚜", 2);
-    createStoreItem("MEME4", 12000, "⛏️", 3);
-    createStoreItem("MEME5", 130000, "🏭", 4);
-
     // --- LOAD MAIN ASSET ---
 
-    const temp_img = new Image()
-    temp_img.src = 'images.png'
-    temp_img.onload = function() {
-        // 3. Create Fabric Image from the native one
-        const fImg = new fabric.Image(temp_img, {
-            crossOrigin: "anonymous"
-        });
-        
-        // 4. Run your setup logic
-        setupMainClicker(fImg);
-    };
-    // 5. Safety Fallback: If image fails, draw a circle so game still works
-    temp_img.onerror = function() {
-        console.error("Image failed to load. Using fallback circle.");
-        const fallback = new fabric.Circle({ radius: 100, fill: '#ffcc00', stroke: '#fff', strokeWidth: 5 });
-        setupMainClicker(fallback);
-    };
-
     // Using the generated image ID or a placeholder
-    function setupMainClicker(fabricObj) {
+    function setupMainClicker(clickerImg) {
+        const fabricObj = new fabric.Image(assets[clickerImg], {
+            crossOrigin: "anonymous"
+        })
         assets.wolvey = fabricObj;
         
         fabricObj.set({
@@ -345,14 +380,23 @@
 
         canvas.requestRenderAll();
     }
+    
+    preloadAssets(assetUrls).then(loadedAssets => {
+        console.log("All assets finished loading!", loadedAssets);
 
-    canvas.on('mouse:down', (e) => {
-        console.log("Top object under cursor:", e.target);
-    });
+        // Main Clicker
+        setupMainClicker("images.png");
 
+        // Create some dummy store items
+        createStoreItem("MEME1", 15, "images.png", 0);
+        createStoreItem("MEME2", 100, "images.png", 1);
+        createStoreItem("MEME3", 1100, "images.png", 2);
+        createStoreItem("MEME4", 12000, "images.png", 3);
+        createStoreItem("MEME5", 130000, "images.png", 4);
+        renderLayout();
+    })
 
     // Listen to resize
     window.addEventListener('resize', renderLayout);
-    renderLayout();
 </script>
 </html>
