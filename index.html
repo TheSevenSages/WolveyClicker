@@ -22,6 +22,7 @@
     </div>
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script src="logic.js"></script>
 <script>
     const canvas = new fabric.Canvas('c', {
         selection: false, // Disable the blue group selection box globally
@@ -29,8 +30,11 @@
         backgroundColor: '#000000'
     });
 
+    const assetUrls = [
+        'images.png'
+    ];
+
     // Game State
-    let mdpCount = 0;
     const assets = {
         wolvey: null,
         storeItems: []
@@ -46,11 +50,6 @@
         storeHover: '#2a3542',
         storeBg: '#1a232e'
     };
-
-    // 1. Define your list of assets here
-    const assetUrls = [
-        'images.png'
-    ];
 
     /**
      * Preloads a list of images so they are cached and ready to use.
@@ -126,8 +125,8 @@
     canvas.add(storeTitle);
 
     // 4. Helper to create a Store Item Button
-    function createStoreItem(name, price, iconImg, index) {
-        const height = 80;
+    function createStoreItem(name, price, iconImg, flavorTxt, index) {
+        const height = 100;
         const padding = 10;
         
         // Container Box
@@ -140,18 +139,6 @@
             strokeWidth: 1
         });
 
-        // Icon (Emoji is easier than loading 10 images for a demo)
-        // var icon = null
-        // const _img = new Image()
-        // _img.src = iconImg
-        // _img.onload = function() {
-        //     // 3. Create Fabric Image from the native one
-        //     icon = new fabric.Image(_img, {
-        //         crossOrigin: "anonymous",
-        //         left: 10,
-        //         top: 10
-        //     });
-        // };
         const icon = new fabric.Image(assets[iconImg], {
             crossOrigin: "anonymous",
             left: 10,
@@ -159,13 +146,6 @@
             scaleX: 0.2,
             scaleY: 0.2
         });
-        icon.setCoords()
-        
-        // const icon = new fabric.Text(iconImg, {
-        //     fontSize: 40,
-        //     left: 10,
-        //     top: 10
-        // });
 
         // Name
         const nameText = new fabric.Text(name, {
@@ -178,7 +158,7 @@
         });
 
         // Price
-        const priceText = new fabric.Text(`🍪 ${price}`, {
+        const priceText = new fabric.Text(`📝 ${price}`, {
             fontFamily: 'Arial',
             fontSize: 16,
             fill: '#66cdaa',
@@ -186,8 +166,18 @@
             top: 35
         });
 
+        // Price
+        const flavorText = new fabric.Text(`\"${flavorTxt}\"`, {
+            fontFamily: 'Arial',
+            fontSize: 12,
+            fontStyle: "italic",
+            fill: '#66cdaa',
+            left: 10,
+            top: 65
+        });
+
         // Group them
-        const group = new fabric.Group([bg, icon, nameText, priceText], {
+        const group = new fabric.Group([bg, icon, nameText, priceText, flavorText], {
             left: 0, // Set in layout
             top: 0,  // Set in layout
             selectable: false, // LOCKED: User can't move the button
@@ -308,8 +298,8 @@
 
         // 2. Define Columns
         const leftW = w * 0.30;
-        const midW = w * 0.45; // Leftover for middle
-        const rightW = w * 0.25;
+        const midW = w * 0.30; // Leftover for middle
+        const rightW = w * 0.4;
         
         // 3. Position Backgrounds
         panelMid.set({ width: midW + leftW, height: h });
@@ -388,11 +378,11 @@
         setupMainClicker("images.png");
 
         // Create some dummy store items
-        createStoreItem("MEME1", 15, "images.png", 0);
-        createStoreItem("MEME2", 100, "images.png", 1);
-        createStoreItem("MEME3", 1100, "images.png", 2);
-        createStoreItem("MEME4", 12000, "images.png", 3);
-        createStoreItem("MEME5", 130000, "images.png", 4);
+        createStoreItem("ROOT", 15, "images.png", "I have become ROOTS Eternal", 0);
+        createStoreItem("MEME2", 100, "images.png", "funny quote", 1);
+        createStoreItem("MEME3", 1100, "images.png", "funny quote", 2);
+        createStoreItem("MEME4", 12000, "images.png", "funny quote", 3);
+        createStoreItem("MEME5", 130000, "images.png", "funny quote", 4);
         renderLayout();
     })
 
