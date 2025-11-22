@@ -131,6 +131,7 @@
     });
     canvas.add(storeTitle);
 
+
     // 4. Helper to create a Store Item Button
     function createStoreItem(name, price, iconImg, flavorTxt, index) {
         const height = 100;
@@ -173,7 +174,7 @@
             top: 35
         });
 
-        // Price
+        // Flavor
         const flavorText = new fabric.Text(`\"${flavorTxt}\"`, {
             fontFamily: 'Arial',
             fontSize: 12,
@@ -183,8 +184,18 @@
             top: 65
         });
 
+        // Count
+        const countText = new fabric.Text(`x0`, {
+            fontFamily: 'Arial',
+            fontSize: 35,
+            fontStyle: "bold",
+            fill: '#66cdaa',
+            left: 175,
+            top: 20
+        });
+
         // Group them
-        const group = new fabric.Group([bg, icon, nameText, priceText, flavorText], {
+        const group = new fabric.Group([bg, icon, nameText, priceText, flavorText, countText], {
             left: 0, // Set in layout
             top: 0,  // Set in layout
             selectable: false, // LOCKED: User can't move the button
@@ -211,6 +222,7 @@
         });
         group.on('mouseup', () => {
             bg.set('fill', COLORS.storeHover);
+            countText.set('text', `x${++itemTracker[index].count}`)
             canvas.requestRenderAll();
         });
 
@@ -244,7 +256,23 @@
             // Animate Shrink
             fabricObj.animate('scaleX', fabricObj.scaleX * 0.9, { duration: 50, onChange: canvas.renderAll.bind(canvas) });
             fabricObj.animate('scaleY', fabricObj.scaleY * 0.9, { duration: 50, onChange: canvas.renderAll.bind(canvas) });
+        });
+
+        fabricObj.on('mouseup', function() {
+            // Calculate correct return scale based on layout rules
+            const w = canvas.width;
+            const h = canvas.height;
+            const leftW = w * 0.30;
             
+            // Calculate the target size based on current layout
+            const targetSize = Math.min(leftW, h) * 0.6;
+            const objWidth = fabricObj.type === 'circle' ? fabricObj.radius * 2 : fabricObj.width; 
+            const targetScale = targetSize / objWidth; 
+
+            // Animate Back
+            fabricObj.animate('scaleX', targetScale, { duration: 100, easing: fabric.util.ease.easeOutBounce, onChange: canvas.renderAll.bind(canvas) });
+            fabricObj.animate('scaleY', targetScale, { duration: 100, easing: fabric.util.ease.easeOutBounce, onChange: canvas.renderAll.bind(canvas) });
+
             // Score Logic
             mdpCount++;
             scoreLabel.set('text', `${mdpCount} Credits`);
@@ -253,9 +281,9 @@
             spawnFloater("+1", fabricObj.left, fabricObj.top);
         });
 
-        fabricObj.on('mouseup', function() {
-            // Calculate correct return scale based on layout rules
-            const w = canvas.width;
+        fabricObj.on('mouseout', () => {
+             // Calculate correct return scale based on layout rules
+             const w = canvas.width;
             const h = canvas.height;
             const leftW = w * 0.30;
             
@@ -392,8 +420,39 @@
         createStoreItem("MEME5", 130000, assets.images["meme5"], "funny quote", 4);
         renderLayout();
     })
-
     // Listen to resize
     window.addEventListener('resize', renderLayout);
+
+    let lastTimeStamp = -1
+    let lastCreditCount = 0
+    function Update(timestamp)
+    {
+        // Update score label
+        scoreLabel.set('text', `${Math.floor(mdpCount)} MDP Credits`);
+
+        console.log(Math.floor(timestamp % 500))
+        // Update credits per second label
+        if (lastTimeStamp != -1)
+        {
+            if (timestamp - lastTimeStamp > 250)
+            {
+                console.log("cps")
+                const deltaTimeSeconds = 1000 / (timestamp - lastTimeStamp)
+                const totalCreditsPerSecond = (mdpCount - lastCreditCount) * deltaTimeSeconds;
+                cpsLabel.set('text', `per second: ${Math.floor(totalCreditsPerSecond)}`);
+
+                lastTimeStamp = timestamp
+                lastCreditCount = mdpCount
+            }
+        }
+        else
+        {
+            lastTimeStamp = timestamp
+            lastCreditCount = mdpCount
+        }
+        canvas.requestRenderAll();
+        window.requestAnimationFrame(Update)
+    }
+    window.requestAnimationFrame(Update)
 </script>
 </html>
