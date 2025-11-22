@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <div id="canvas-container" style="border: 1px solid #ccc;">
+        <canvas id="c" width="800" height="600"></canvas>
+    </div>
+</body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+<script>
+    const canvas = new fabric.Canvas('c');
+    canvas.setBackgroundColor('#f0f0f0', canvas.renderAll.bind(canvas));
+</script>
+</html>
