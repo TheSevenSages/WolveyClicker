@@ -54,7 +54,9 @@
         text: '#ffffff',
         accent: '#66cdaa',
         storeHover: '#2a3542',
-        storeBg: '#1a232e'
+        storeBg: '#1a232e',
+        upgradeBg: '#a30b0b',
+        upgradeHover: '#e87979'
     };
 
     /**
@@ -193,7 +195,7 @@
             fontSize: 35,
             fontStyle: "bold",
             fill: '#66cdaa',
-            left: 175,
+            left: 160,
             top: 20
         });
 
@@ -207,8 +209,11 @@
             top: 0
         });
 
+        // Upgrade button
+        const upgradeButton = createUpgradeButton(index, cpsText)
+
         // Group them
-        const group = new fabric.Group([bg, icon, nameText, priceText, flavorText, countText, cpsText], {
+        const group = new fabric.Group([bg, icon, nameText, priceText, flavorText, countText, cpsText, upgradeButton], {
             left: 0, // Set in layout
             top: 0,  // Set in layout
             selectable: false, // LOCKED: User can't move the button
@@ -221,7 +226,10 @@
         group.origFill = COLORS.storeBg;
         
         // Add interaction
-        group.on('mouseover', () => {
+        group.on('mouseover', (opt) => {
+            if (opt.subTargets && opt.subTargets.includes(upgradeButton)) {
+                return; // STOP HERE. Do not run the code below.
+            }
             bg.set('fill', COLORS.storeHover);
             canvas.requestRenderAll();
         });
@@ -229,11 +237,18 @@
             bg.set('fill', COLORS.storeBg);
             canvas.requestRenderAll();
         });
-        group.on('mousedown', () => {
+        group.on('mousedown', (opt) => {
+            if (opt.subTargets && opt.subTargets.includes(upgradeButton)) {
+                return; // STOP HERE. Do not run the code below.
+            }
             bg.set('fill', '#444');
             canvas.requestRenderAll();
         });
-        group.on('mouseup', () => {
+        group.on('mouseup', (opt) => {
+            if (opt.subTargets && opt.subTargets.includes(upgradeButton)) {
+                return; // STOP HERE. Do not run the code below.
+            }
+
             bg.set('fill', COLORS.storeHover);
             // increase count
             countText.set('text', `x${++itemTracker[index].count}`)
@@ -245,6 +260,74 @@
 
         assets.storeItems.push(group);
         canvas.add(group);
+    }
+
+    function createUpgradeButton(itemIndex, cpstext) {
+        // Container Box
+        const bg = new fabric.Rect({
+            width: 50, // Will be resized in layout
+            height: 75,
+            fill: COLORS.upgradeBg,
+            rx: 5, ry: 5,
+            stroke: '#333',
+            strokeWidth: 1
+        });
+
+        // level
+        const level = new fabric.Text(`LEVEL\n${itemTracker[itemIndex].level}`, {
+            fontFamily: 'Arial',
+            fontSize: 12,
+            textAlign: "center",
+            fill: '#fff',
+            left: 5,
+            top: 5
+        });
+
+        // Upgrade Cost
+        const upgradeCost = new fabric.Text(`📝 ${CalculateUpgradeCost(itemIndex)}`, {
+            fontFamily: 'Arial',
+            fontSize: 12,
+            textAlign: "center",
+            fill: '#fff',
+            left: 0,
+            top: 40
+        });
+
+        // Group them
+        const group = new fabric.Group([bg, level, upgradeCost], {
+            left: 225, // Set in layout
+            top: 7.5,  // Set in layout
+            selectable: false, // LOCKED: User can't move the button
+            hoverCursor: 'pointer',
+            subTargetCheck: false,
+            name: 'upgradeButton'
+        });
+
+         // Add interaction
+        group.on('mouseover', () => {
+            bg.set('fill', COLORS.upgradeHover);
+            canvas.requestRenderAll();
+        });
+        group.on('mouseout', () => {
+            bg.set('fill', COLORS.upgradeBg);
+            canvas.requestRenderAll();
+        });
+        group.on('mousedown', () => {
+            bg.set('fill', '#e69595');
+            canvas.requestRenderAll();
+        });
+        group.on('mouseup', () => {
+            bg.set('fill', COLORS.upgradeHover);
+
+            itemTracker[itemIndex].creditsPerSecond *= 2
+            cpstext.set('text', `${itemTracker[itemIndex].creditsPerSecond}/s`)
+
+            level.set('text', `LEVEL\n${++itemTracker[itemIndex].level}`)
+            upgradeCost.set('text', `📝 ${CalculateUpgradeCost(itemIndex)}`)
+            canvas.requestRenderAll();
+        });
+
+        return group
     }
 
     // --- LOAD MAIN ASSET ---

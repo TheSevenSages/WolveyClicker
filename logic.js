@@ -4,6 +4,7 @@ let creditsPerClick = 1;
 let _itemTemplate = {
     count: 0,
     cost: 1,
+    level: 1,
     creditsPerSecond: 1
 }
 
@@ -26,3 +27,8 @@ function tick()
 }
 // Set tick speed to 1/60th of a second
 window.setInterval(tick, 1000 / 60)
+
+function CalculateUpgradeCost(itemIndex)
+{
+    return Math.pow(10, itemIndex + 1) * Math.pow(5, itemTracker[itemIndex].level)
+}
