@@ -123,10 +123,12 @@
 
 
     // 4. Helper to create a Store Item Button
-    function createStoreItem(name, price, creditsPerSecond, iconImg, flavorTxt, index) {
+    function createStoreItem(name, price, creditsPerSecond, iconImg, flavorTxt, audio, index) {
         itemTracker[index].cost = price
         itemTracker[index].creditsPerSecond = creditsPerSecond
         itemTracker[index].name = name
+        itemTracker[index].image = iconImg
+        itemTracker[index].audio = audio
 
         const height = 100;
         const padding = 10;
@@ -612,8 +614,8 @@
 
         // 2. Define Columns
         const leftW = w * 0.30;
-        const midW = w * 0.30; 
-        const rightW = w * 0.4;
+        const midW = w * 0.40; 
+        const rightW = w * 0.30;
         
         // 3. Position Backgrounds
         panelMid.set({ width: midW + leftW, height: h });
@@ -772,11 +774,11 @@
         setupMainClicker(assets.images["wolvey"]);
 
         // Create some store items
-        createStoreItem("ROOTS", 15, 0.1, assets.images["meme1"], "I have become ROOTS Eternal", 0);
-        createStoreItem("BOOZE", 100, 1, assets.images["meme2"], "We thank you for your habitual drinking!", 1);
-        createStoreItem("AMAN GUS", 1100, 8, assets.images["meme3"], "Sussy baka!", 2);
-        createStoreItem("AMEN BREAK", 12000, 47, assets.images["meme4"], "Awoman break", 3);
-        createStoreItem("JOB...", 130000, 260, assets.images["meme5"], "There was a man in the land of Uz...", 4);
+        createStoreItem("ROOTS", 15, 0.1, assets.images["meme1"], "I have become ROOTS Eternal", 'root.wav', 0);
+        createStoreItem("BOOZE", 100, 1, assets.images["meme2"], "We thank you for your habitual drinking!", 'drink.mp3', 1);
+        createStoreItem("AMAN GUS", 1100, 8, assets.images["meme3"], "Sussy baka!", 'amog.mp3', 2);
+        createStoreItem("AMEN BREAK", 12000, 47, assets.images["meme4"], "Awoman break", 'break.mp3', 3);
+        createStoreItem("JOB...", 130000, 260, assets.images["meme5"], "There was a man in the land of Uz...", 'job.mp3', 4);
 
         // Create power ups
         for (i = 1; i < 4; i++)

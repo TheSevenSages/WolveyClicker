@@ -247,3 +247,107 @@ function triggerImageChaos(imgElement, count = 20, duration = 5000, bounceSound)
     // Start the chaos
     animate();
 }
+
+/**
+ * Starts a recurring animation where an image flies across the screen 
+ * from side to side, with a chance to play an audio file during the flight.
+ * * @param {HTMLImageElement} imgElement - The source image to fly across the screen.
+ * @param {HTMLAudioElement} audioElement - The source audio to play (must be preloaded/ready).
+ * @param {number} flightDuration - Time in milliseconds for one trip across the screen (e.g., 5000).
+ * @param {number} [chanceToPlay=0.4] - Probability (0.0 to 1.0) the audio will play on any given flight.
+ * @param {number} [cooldownMs=1000] - Minimum delay in milliseconds between the end of one flight and the start of the next.
+ */
+function startFlyingImageEvent(imgElement, audioElement, flightDuration, chanceToPlay = 0.4, cooldownMs = 1000) {
+    if (!imgElement || !audioElement) {
+        console.error("Missing image or audio element for flying event.");
+        return;
+    }
+
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+    
+    // Scale the image down for better visibility if it's too big
+    const scale = Math.min(1, 150 / imgElement.width); 
+
+    const flyingImage = new fabric.Image(imgElement, {
+        originX: 'center',
+        originY: 'center',
+        scaleX: scale,
+        scaleY: scale,
+        selectable: false,
+        evented: false, // Must be false so it doesn't block clicks
+        visible: false, // Start invisible
+    });
+    
+    // Add to canvas once and keep it there
+    canvas.add(flyingImage);
+
+    /** Main function to run a single flight animation. */
+    function runFlight() {
+        // 1. Determine direction and starting/ending X coordinates
+        const direction = Math.random() < 0.5 ? 'right' : 'left';
+        
+        // Image width, scaled
+        const imgW = flyingImage.width * scale; 
+        
+        let startX, endX;
+        
+        if (direction === 'right') { // Fly from Left to Right
+            startX = -imgW;
+            endX = canvasWidth + imgW;
+        } else { // Fly from Right to Left
+            startX = canvasWidth + imgW;
+            endX = -imgW;
+        }
+
+        // 2. Determine random Y position (Ensures it's within the vertical canvas bounds)
+        const randomY = Math.random() * (canvasHeight - 200) + 100;
+        
+        // 3. Apply initial state
+        flyingImage.set({
+            left: startX,
+            top: randomY,
+            angle: direction === 'right' ? 0 : 180, // Rotate if flying left
+            visible: true
+        });
+
+        // 4. Decide if audio plays during this flight
+        const shouldPlayAudio = Math.random() < chanceToPlay;
+        if (shouldPlayAudio) {
+            // Reset and play the audio
+            audioElement.currentTime = 0;
+            audioElement.play().catch(e => console.log("Audio playback blocked:", e));
+        }
+
+        // 5. Start the Fabric animation
+        flyingImage.animate('left', endX, {
+            duration: flightDuration,
+            easing: fabric.util.ease.easeLinear, // Constant speed
+            onChange: canvas.renderAll.bind(canvas),
+            onComplete: () => {
+                // 6. Cleanup and Schedule Next Flight
+                flyingImage.set({ visible: false });
+                
+                // Stop audio if it was still playing when image leaves the screen
+                if (shouldPlayAudio) {
+                    audioElement.pause();
+                }
+
+                // Schedule the next flight after the cooldown period
+                setTimeout(runFlight, cooldownMs);
+            }
+        });
+    }
+
+    // Start the first flight
+    runFlight();
+
+    // Re-render on resize to maintain correct start/end points
+    window.addEventListener('resize', () => {
+        // You would typically re-run runFlight() here, but since it's already running,
+        // we just update the canvas dimensions and let the next cycle pick up the new width.
+        canvas.setWidth(window.innerWidth);
+        canvas.setHeight(window.innerHeight);
+        canvas.requestRenderAll();
+    });
+}

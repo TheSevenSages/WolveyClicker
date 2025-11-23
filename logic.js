@@ -1,5 +1,5 @@
 const assetUrls = {
-    wolvey: 'images.png',
+    wolvey: 'wolvey_head.png',
     meme1: 'carrot.png',
     meme2: 'booze.jpeg',
     meme3: 'aman.jpg',
@@ -33,7 +33,9 @@ let _itemTemplate = {
     cost: 1,
     level: 1,
     creditsPerSecond: 1,
-    name: ""
+    name: "",
+    image: "",
+    audio: ""
 }
 
 let itemTracker = [
@@ -58,6 +60,11 @@ function tick()
     let tickValue = 0
     itemTracker.forEach(element => {
         tickValue += element.count * (element.creditsPerSecond / 60)
+        if (Math.random() < 0.0005 * element.count)
+        {
+            let audio = new Audio(element.audio)
+            audio.onload = startFlyingImageEvent(element.image, audio, 5000, 0.2, 5000)
+        }
     });
     mdpCount += tickValue
 }
