@@ -93,3 +93,16 @@ function NumberFormatter(number) {
     }
     return number
 }
+
+// // --- NEW UTILITY: NORMALIZE IMAGE SCALE ---
+// function normalizeImageScale(img, targetWidth = 100, targetHeight = 100) {
+//     // Calculate the scale needed to achieve the target dimensions (e.g., 100x100)
+//     const scaleX = targetWidth / img.width;
+//     const scaleY = targetHeight / img.height;
+    
+//     // Apply the scale factors directly to the fabric image object
+//     img.set({
+//         scaleX: scaleX,
+//         scaleY: scaleY
+//     });
+// }

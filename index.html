@@ -25,6 +25,7 @@
 <script src="logic.js"></script>
 <script src="styling.js"></script>
 <script>
+    
     const canvas = new fabric.Canvas('c', {
         selection: false, // Disable the blue group selection box globally
         hoverCursor: 'default',
@@ -38,7 +39,8 @@
         meme3: 'images.png',
         meme4: 'images.png',
         meme5: 'images.png',
-        swolvey: 'images.png'
+        swolvey: 'images.png',
+        igda: 'images.png'
     };
 
     // Game State
@@ -334,7 +336,7 @@
         return group
     }
 
-    function createPowerUp(name, price, description, iconImg, flavorTxt, onpurchase) {
+    function createPowerUp(name, price, description, iconImg, onpurchase) {
         const height = 100;
         const padding = 10;
         const index = assets.powerUps.length
@@ -350,8 +352,35 @@
             strokeWidth: 1
         });
 
+        const icon = new fabric.Image(iconImg, {
+            crossOrigin: "anonymous",
+            left: 10,
+            top: 5,
+            scaleX: 0.35,
+            scaleY: 0.35
+        });
+
+        // Price
+        const priceText = new fabric.Text(`${NumberFormatter(price)}`, {
+            fontFamily: 'Arial',
+            fontSize: 16,
+            fill: COLORS.text,
+            left: 0,
+            top: height
+        });
+
+        // Flavor
+        const flavorText = new fabric.Text(`\"${description}\"`, {
+            fontFamily: 'Arial',
+            fontSize: 8,
+            fontStyle: "italic",
+            fill: COLORS.text,
+            left: 35,
+            top: height
+        });
+
         // Group them
-        const group = new fabric.Group([bg], {
+        const group = new fabric.Group([bg, icon, priceText, flavorText], {
             left: 0, // Set in layout
             top: 0,  // Set in layout
             selectable: false, // LOCKED: User can't move the button
@@ -475,6 +504,7 @@
     }
 
     // --- RESPONSIVE LAYOUT ENGINE ---
+// --- RESPONSIVE LAYOUT ENGINE ---
     
     function renderLayout() {
         // 1. Get Dimensions
@@ -487,19 +517,50 @@
 
         // 2. Define Columns
         const leftW = w * 0.30;
-        const midW = w * 0.30; // Leftover for middle
+        const midW = w * 0.30; 
         const rightW = w * 0.4;
         
         // 3. Position Backgrounds
         panelMid.set({ width: midW + leftW, height: h });
         panelRight.set({ left: leftW + midW, width: rightW, height: h });
-        
         div2.set({ left: leftW + midW, height: h });
 
-        // 4. Position Cookie (Center of Left Panel)
+        // --- A. TEMPORARY LAYOUT PASS (Calculate Required Height at Scale 1) ---
+        
+        let requiredY = 60; // Start below the store title (Title is at 20, 40px height approx)
+        const itemSpacing = 10;
+        
+        // 1. Store Items (Scale 1 estimation)
+        assets.storeItems.forEach((item) => {
+            const itemHeight = item.height; // Use raw height for required space calculation
+            requiredY += itemHeight + itemSpacing;
+        });
+        
+        // 2. Power Ups (Scale 1 estimation in 2 columns)
+        let maxPowerUpRowHeight = 0;
+        let powerUpRows = Math.ceil(assets.powerUps.length / 2);
+        
+        // Use the height of the first power up item (assuming all are the same)
+        if (assets.powerUps.length > 0) {
+            maxPowerUpRowHeight = assets.powerUps[0].height; // Height at scale 1
+            // Total height needed for power-up rows
+            requiredY += (powerUpRows * maxPowerUpRowHeight) + ((powerUpRows - 1) * itemSpacing);
+        }
+        
+        // Total height of ALL content starting from Y=60
+        const totalContentHeight = requiredY - 60; 
+        
+        // Available vertical space in the right panel (below title, 10px bottom margin)
+        const availableHeight = h - 60 - 10; 
+        
+        // Calculate the necessary vertical scale factor (This must be applied uniformly to prevent stretching)
+        const scaleFactor = Math.min(1, availableHeight / totalContentHeight); 
+
+        // 4. Position Cookie (Center of Left/Mid Panel)
         if(assets.wolvey) {
-            const wolveySize = Math.min(leftW, h) * 0.6; // 60% of the smaller dimension
-            const scale = wolveySize / assets.wolvey.width;
+            const wolveySize = Math.min(leftW, h) * 0.6;
+            const objWidth = assets.wolvey.width;
+            const scale = wolveySize / objWidth;
             assets.wolvey.set({
                 left: (leftW + midW) / 2,
                 top: h / 2,
@@ -514,7 +575,6 @@
                     left: (leftW + midW) / 2,
                     top: h / 2
             });
-            // Ensure the bars are placed behind everything else
             canvas.sendToBack(assets.bgBars);
         }
 
@@ -532,49 +592,81 @@
         canvas.bringToFront(cpsLabel)
         canvas.bringToFront(scoreLabel)
 
-        // 6. Position Store (Right Panel)
+        // 6. Position Store Title (Right Panel Top)
         storeTitle.set({
             left: (leftW + midW) + (rightW / 2),
             originX: 'center',
             top: 20
         });
 
-        let currentY = 60;
+        // --- B. FINAL LAYOUT PASS (Apply Uniform Scale and Position) ---
+        
+        let currentY = 60; // Start below the store title
+        const rightPanelCenter = (leftW + midW) + (rightW / 2);
+        
+        // 1. Position Store Items (Top Section)
         assets.storeItems.forEach((item) => {
-            // Resize the background rect of the group to fit column
-            const bgRect = item.getObjects()[0];
-            const targetWidth = rightW - 20;
             
-            // Note: modifying objects inside a group can be tricky in Fabric
-            // We scale the whole group to fit the width approximately
-            // Or we just center it. Let's Center it for simplicity.
+            // Apply UNIFORM calculated scale to prevent stretching
+            item.scaleX = scaleFactor;
+            item.scaleY = scaleFactor;
+            
+            const scaledHeight = item.height * scaleFactor;
             
             item.set({
-                left: (leftW + midW) + (rightW / 2),
+                visible: true,
+                left: rightPanelCenter,
                 top: currentY,
                 originX: 'center',
                 originY: 'top'
             });
+            item.setCoords()
+
+            // Increment Y for the next item
+            currentY += scaledHeight + (itemSpacing * scaleFactor);
+        });
+
+        // 2. Position Power Ups (Immediately Below Store Items, 2 Columns)
+        if (assets.powerUps.length > 0) {
+            let itemCounter = 0;
+            let currentPowerUpRowY = currentY; // Start right after the last store item
             
-            // Simple scale to fit if column is too small
-            if (rightW < 300) {
-                const scale = (rightW - 20) / 280;
-                item.scale(scale);
-            } else {
-                item.scale(1);
-            }
+            // Use the scaled height and spacing based on the uniform scale factor
+            const powerUpRowHeight = maxPowerUpRowHeight * scaleFactor; 
+            const powerUpRowSpacing = itemSpacing * scaleFactor;
+            
+            // Column Center Points
+            const col1X = (leftW + midW) + (rightW / 4); // Center of Left Column
+            const col2X = (leftW + midW) + (rightW / 4) * 3; // Center of Right Column
 
-            // Increment Y based on item height (including scale)
-            currentY += (item.height * item.scaleY) + 10;
-        });
-        // Do power ups now
-        let currentX = 0
-        assets.powerUps.forEach((item) => {
-            // Resize the background rect of the group to fit column
-            const bgRect = item.getObjects()[0];
-            const targetWidth = rightW - 20;
-        });
+            assets.powerUps.forEach((item) => {
+                
+                // Apply UNIFORM calculated scale to prevent stretching
+                item.scaleX = scaleFactor; 
+                item.scaleY = scaleFactor; 
+                
+                const colIndex = itemCounter % 2; 
+                const rowIndex = Math.floor(itemCounter / 2); 
+                
+                // X position: Center of Left Column (col1X) or Center of Right Column (col2X)
+                const finalX = colIndex === 0 ? col1X : col2X;
+                
+                // Final Y position: Start point + (row index * (row height + spacing))
+                let finalY = currentPowerUpRowY + (rowIndex * (powerUpRowHeight + powerUpRowSpacing));
 
+                item.set({
+                    visible: true,
+                    left: finalX, 
+                    top: finalY,
+                    originX: 'center',
+                    originY: 'top'
+                });
+                item.setCoords()
+                
+                itemCounter++;
+            });
+        }
+        
         canvas.requestRenderAll();
     }
     
@@ -592,9 +684,15 @@
         createStoreItem("MEME5", 130000, 260, assets.images["meme5"], "funny quote", 4);
 
         // Create power ups
-        createPowerUp("Swolvey lv1", 50, "Powers up your clicks!", assets.images["swolvey"], "funny flavor", () => {
-            console.log('SWOLVEY BOUGHT!')
-        })
+        for (i = 1; i < 4; i++)
+        {
+            createPowerUp(`Swolvey lv${i}`, Math.pow(50, i), "Powers up clicks", assets.images["swolvey"], () => {
+                console.log('SWOLVEY BOUGHT!')
+            })
+            createPowerUp(`IGDA lv${i}`, Math.pow(50, i), "Yarger likes that :)", assets.images["igda"], () => {
+                console.log('IGDA BOUGHT!')
+            })
+        }
 
         assets.bgBars = createSpinningBars()
         renderLayout();
