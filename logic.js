@@ -5,7 +5,7 @@ const assetUrls = {
     meme3: 'images.png',
     meme4: 'images.png',
     meme5: 'images.png',
-    swolvey: 'images.png',
+    swolvey: 'swol.png',
     igda: 'images.png',
     tolmet: 'tolmet.webp',
     crisis: 'crisis.png'
