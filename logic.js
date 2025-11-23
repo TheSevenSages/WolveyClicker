@@ -60,10 +60,10 @@ function tick()
     let tickValue = 0
     itemTracker.forEach(element => {
         tickValue += element.count * (element.creditsPerSecond / 60)
-        if (Math.random() < 0.0005 * element.count)
+        if (Math.random() < 0.001 * element.count)
         {
             let audio = new Audio(element.audio)
-            audio.onload = startFlyingImageEvent(element.image, audio, 5000, 0.2, 5000)
+            audio.onload = flyImage(element.image, audio, 5000, 0.2)
         }
     });
     mdpCount += tickValue

@@ -26,7 +26,12 @@
 <script src="logic.js"></script>
 <script src="styling.js"></script>
 <script>
-    
+    myAudio = new Audio('bgm.mp3');
+    myAudio.addEventListener('ended', function() {
+        this.currentTime = 0;
+        this.play();
+    }, false);
+    myAudio.play()
     const canvas = new fabric.Canvas('c', {
         selection: false, // Disable the blue group selection box globally
         hoverCursor: 'default',
