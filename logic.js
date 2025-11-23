@@ -6,7 +6,8 @@ const assetUrls = {
     meme4: 'images.png',
     meme5: 'images.png',
     swolvey: 'images.png',
-    igda: 'images.png'
+    igda: 'images.png',
+    tolmet: 'tolmet.webp'
 };
 
 // Game State
@@ -165,7 +166,8 @@ function tolmet()
     itemTracker[randomItem].count -= 5
     if (itemTracker[randomItem].count < 0) {itemTracker[randomItem].count = 0}
     console.log('no soul!', randomItem)
-    showRedAlert('TOLMET IS HERE!', `5 ${itemTracker[randomItem].name} are gone for good!`)
+    triggerImageChaos(assets.images.tolmet, 20)
+    showRedAlert('TOLMET IS HERE!', `5 ${itemTracker[randomItem].name} are gone for good!`, '#ff0000', '#8b0000')
     assets.storeItems[randomItem].fire('tolmet', {})
     startRandomIntervalLoop(tolmet, 4, 7)
 }
@@ -185,14 +187,14 @@ function startEventTimers(){
     startRandomIntervalLoop(crisis, 0.1, 0.1)
 }
 
-function showRedAlert(messageText, subtext) {
+function showRedAlert(messageText, subtext, color1, color2) {
     // 1. Create the Text Object
     const t1 = new fabric.Text(messageText, {
         fontSize: 40,
         fontFamily: 'Arial',
         fontWeight: 'bold',
-        fill: '#ff0000',      // Bright Red
-        stroke: '#8b0000',    // Dark Red Outline for readability
+        fill: color1,      // Bright Red
+        stroke: color2,    // Dark Red Outline for readability
         strokeWidth: 1,
         originX: 'center',
         top: 0,
@@ -202,8 +204,8 @@ function showRedAlert(messageText, subtext) {
         fontSize: 40,
         fontFamily: 'Arial',
         fontWeight: 'bold',
-        fill: '#ff0000',      // Bright Red
-        stroke: '#8b0000',    // Dark Red Outline for readability
+        fill: color1,      // Bright Red
+        stroke: color2,    // Dark Red Outline for readability
         strokeWidth: 1,
         originX: 'center',
         top: 50,
@@ -248,4 +250,94 @@ function showRedAlert(messageText, subtext) {
             }, 3000); // 3000ms = 3 seconds wait
         }
     });
+}
+
+/**
+ * Spawns a chaotic swarm of images that fly around the screen.
+ * @param {HTMLImageElement} imgElement - The source image to replicate.
+ * @param {number} count - How many images to spawn (default 20).
+ * @param {number} duration - How long (ms) they last (default 5000ms).
+ */
+function triggerImageChaos(imgElement, count = 20, duration = 5000) {
+    const particles = [];
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+
+    // 1. Create Particles
+    for (let i = 0; i < count; i++) {
+        const p = new fabric.Image(imgElement, {
+            left: canvasWidth / 2,
+            top: canvasHeight / 2,
+            originX: 'center',
+            originY: 'center',
+            selectable: false,
+            evented: false,
+            opacity: 1,
+            // Random Scale between 0.5 and 1.5
+            scaleX: Math.random() + 0.5,
+            scaleY: Math.random() + 0.5,
+            // Start at random angle
+            angle: Math.random() * 360
+        });
+        normalizeImageScale(p, 100, 100)
+
+        // Custom physics properties attached to the object
+        p.velocity = {
+            x: (Math.random() - 0.5) * 25, // Speed X: -12.5 to 12.5
+            y: (Math.random() - 0.5) * 25, // Speed Y: -12.5 to 12.5
+            rotation: (Math.random() - 0.5) * 20 // Spin speed
+        };
+
+        canvas.add(p);
+        particles.push(p);
+    }
+
+    // Ensure they are on top
+    particles.forEach(p => canvas.bringToFront(p));
+
+    let startTime = Date.now();
+    let running = true;
+
+    // 2. Animation Loop
+    function animate() {
+        if (!running) return;
+
+        const now = Date.now();
+        const elapsed = now - startTime;
+        const progress = elapsed / duration;
+
+        if (elapsed > duration) {
+            // Cleanup
+            particles.forEach(p => canvas.remove(p));
+            running = false;
+            canvas.requestRenderAll();
+            return;
+        }
+
+        particles.forEach(p => {
+            // Move
+            p.left += p.velocity.x;
+            p.top += p.velocity.y;
+            p.angle += p.velocity.rotation;
+
+            // Bounce off walls
+            if (p.left < 0 || p.left > canvas.width) {
+                p.velocity.x *= -1;
+            }
+            if (p.top < 0 || p.top > canvas.height) {
+                p.velocity.y *= -1;
+            }
+
+            // Fade out in the last 20% of the duration
+            if (progress > 0.8) {
+                p.set('opacity', 1 - ((progress - 0.8) * 5));
+            }
+        });
+
+        canvas.requestRenderAll();
+        fabric.util.requestAnimFrame(animate);
+    }
+
+    // Start the chaos
+    animate();
 }
