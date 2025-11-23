@@ -37,13 +37,15 @@
         meme2: 'images.png',
         meme3: 'images.png',
         meme4: 'images.png',
-        meme5: 'images.png'
+        meme5: 'images.png',
+        swolvey: 'images.png'
     };
 
     // Game State
     const assets = {
         wolvey: null,
         storeItems: [],
+        powerUps: [],
         images: {}
     };
 
@@ -98,7 +100,7 @@
 
     // 1. Background Panels (Visual separation)
     const panelMid = new fabric.Rect({ left: 0, top: 0, fill: COLORS.midBg, selectable: false, evented: false });
-    const panelRight = new fabric.Rect({ left: 0, top: 0, fill: COLORS.rightBg, opacity: 0.6, selectable: false, evented: false });
+    const panelRight = new fabric.Rect({ left: 0, top: 0, fill: COLORS.rightBg, opacity: 0.8, selectable: false, evented: false });
     // Divider lines
     const div2 = new fabric.Rect({ top: 0, width: 6, fill: 'rgba(0,0,0,0.5)', selectable: false, evented: false });
 
@@ -173,7 +175,7 @@
         });
 
         // Price
-        const priceText = new fabric.Text(`📝 ${price}`, {
+        const priceText = new fabric.Text(`MDP: ${NumberFormatter(price)}`, {
             fontFamily: 'Arial',
             fontSize: 16,
             fill: COLORS.text,
@@ -202,7 +204,7 @@
         });
 
         // per second
-        const cpsText = new fabric.Text(`${creditsPerSecond}/s`, {
+        const cpsText = new fabric.Text(`${NumberFormatter(creditsPerSecond)}/s`, {
             fontFamily: 'Arial',
             fontSize: 12,
             fontStyle: "bold",
@@ -253,10 +255,10 @@
 
             bg.set('fill', COLORS.storeHover);
             // increase count
-            countText.set('text', `x${++itemTracker[index].count}`)
+            countText.set('text', `x${NumberFormatter(++itemTracker[index].count)}`)
             // increase cost
             itemTracker[index].cost = Math.ceil(itemTracker[index].cost * 1.15)
-            priceText.set('text', `📝 ${itemTracker[index].cost}`)
+            priceText.set('text', `MDP: ${NumberFormatter(itemTracker[index].cost)}`)
             canvas.requestRenderAll();
         });
 
@@ -276,7 +278,7 @@
         });
 
         // level
-        const level = new fabric.Text(`LEVEL\n${itemTracker[itemIndex].level}`, {
+        const level = new fabric.Text(`LEVEL\n${NumberFormatter(itemTracker[itemIndex].level)}`, {
             fontFamily: 'Arial',
             fontSize: 12,
             textAlign: "center",
@@ -286,7 +288,7 @@
         });
 
         // Upgrade Cost
-        const upgradeCost = new fabric.Text(`📝 ${CalculateUpgradeCost(itemIndex)}`, {
+        const upgradeCost = new fabric.Text(`${NumberFormatter(CalculateUpgradeCost(itemIndex))}`, {
             fontFamily: 'Arial',
             fontSize: 12,
             textAlign: "center",
@@ -322,14 +324,63 @@
             bg.set('fill', COLORS.upgradeHover);
 
             itemTracker[itemIndex].creditsPerSecond *= 2
-            cpstext.set('text', `${itemTracker[itemIndex].creditsPerSecond}/s`)
+            cpstext.set('text', `${NumberFormatter(itemTracker[itemIndex].creditsPerSecond)}/s`)
 
-            level.set('text', `LEVEL\n${++itemTracker[itemIndex].level}`)
-            upgradeCost.set('text', `📝 ${CalculateUpgradeCost(itemIndex)}`)
+            level.set('text', `LEVEL\n${NumberFormatter(++itemTracker[itemIndex].level)}`)
+            upgradeCost.set('text', `${NumberFormatter(CalculateUpgradeCost(itemIndex))}`)
             canvas.requestRenderAll();
         });
 
         return group
+    }
+
+    function createPowerUp(name, price, description, iconImg, flavorTxt, onpurchase) {
+        const height = 100;
+        const padding = 10;
+        const index = assets.powerUps.length
+        console.log(index)
+        
+        // Container Box
+        const bg = new fabric.Rect({
+            width: 100, // Will be resized in layout
+            height: height - padding,
+            fill: COLORS.storeBg,
+            rx: 5, ry: 5,
+            stroke: '#333',
+            strokeWidth: 1
+        });
+
+        // Group them
+        const group = new fabric.Group([bg], {
+            left: 0, // Set in layout
+            top: 0,  // Set in layout
+            selectable: false, // LOCKED: User can't move the button
+            hoverCursor: 'pointer',
+            subTargetCheck: true,
+            name: 'powerUpButton'
+        });
+
+                // Add interaction
+        group.on('mouseover', (opt) => {
+            bg.set('fill', COLORS.storeHover);
+            canvas.requestRenderAll();
+        });
+        group.on('mouseout', () => {
+            bg.set('fill', COLORS.storeBg);
+            canvas.requestRenderAll();
+        });
+        group.on('mousedown', (opt) => {
+            bg.set('fill', COLORS.storeClick);
+            canvas.requestRenderAll();
+        });
+        group.on('mouseup', (opt) => {
+            bg.set('fill', COLORS.storeHover);
+            onpurchase()
+            canvas.requestRenderAll();
+        });
+
+        assets.powerUps.push(group)
+        canvas.add(group)
     }
 
     // --- LOAD MAIN ASSET ---
@@ -376,11 +427,12 @@
             fabricObj.animate('scaleY', targetScale, { duration: 100, easing: fabric.util.ease.easeOutBounce, onChange: canvas.renderAll.bind(canvas) });
 
             // Score Logic
-            mdpCount++;
-            scoreLabel.set('text', `${mdpCount} Credits`);
+            let before = mdpCount;
+            click()
+            scoreLabel.set('text', `${NumberFormatter(mdpCount)} Credits`);
             
             // Spawn Floater
-            spawnFloater("+1", fabricObj.left, fabricObj.top);
+            spawnFloater(`+${NumberFormatter(mdpCount - before)}`, fabricObj.left, fabricObj.top);
         });
 
         fabricObj.on('mouseout', () => {
@@ -515,6 +567,13 @@
             // Increment Y based on item height (including scale)
             currentY += (item.height * item.scaleY) + 10;
         });
+        // Do power ups now
+        let currentX = 0
+        assets.powerUps.forEach((item) => {
+            // Resize the background rect of the group to fit column
+            const bgRect = item.getObjects()[0];
+            const targetWidth = rightW - 20;
+        });
 
         canvas.requestRenderAll();
     }
@@ -525,12 +584,17 @@
         // Main Clicker
         setupMainClicker(assets.images["wolvey"]);
 
-        // Create some dummy store items
+        // Create some store items
         createStoreItem("ROOT", 15, 0.1, assets.images["meme1"], "I have become ROOTS Eternal", 0);
         createStoreItem("MEME2", 100, 1, assets.images["meme2"], "funny quote", 1);
         createStoreItem("MEME3", 1100, 8, assets.images["meme3"], "funny quote", 2);
         createStoreItem("MEME4", 12000, 47, assets.images["meme4"], "funny quote", 3);
         createStoreItem("MEME5", 130000, 260, assets.images["meme5"], "funny quote", 4);
+
+        // Create power ups
+        createPowerUp("Swolvey lv1", 50, "Powers up your clicks!", assets.images["swolvey"], "funny flavor", () => {
+            console.log('SWOLVEY BOUGHT!')
+        })
 
         assets.bgBars = createSpinningBars()
         renderLayout();
@@ -543,7 +607,7 @@
     function Update(timestamp)
     {
         // Update score label
-        scoreLabel.set('text', `${Math.floor(mdpCount)} MDP Credits`);
+        scoreLabel.set('text', `${NumberFormatter(Math.floor(mdpCount))} MDP Credits`);
 
         // Update credits per second label
         if (lastTimeStamp != -1)
@@ -552,7 +616,7 @@
             {
                 const deltaTimeSeconds = 1000 / (timestamp - lastTimeStamp)
                 const totalCreditsPerSecond = (mdpCount - lastCreditCount) * deltaTimeSeconds;
-                cpsLabel.set('text', `per second: ${Math.floor(totalCreditsPerSecond)}`);
+                cpsLabel.set('text', `per second: ${NumberFormatter(Math.floor(totalCreditsPerSecond))}`);
 
                 lastTimeStamp = timestamp
                 lastCreditCount = mdpCount
