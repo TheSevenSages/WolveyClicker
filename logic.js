@@ -1,5 +1,25 @@
+const assetUrls = {
+    wolvey: 'images.png',
+    meme1: 'carrot.png',
+    meme2: 'images.png',
+    meme3: 'images.png',
+    meme4: 'images.png',
+    meme5: 'images.png',
+    swolvey: 'images.png',
+    igda: 'images.png'
+};
+
+// Game State
+const assets = {
+    wolvey: null,
+    storeItems: [],
+    powerUps: [],
+    images: {}
+};
+
 let mdpCount = 0;
 let creditsPerClick = 1;
+let igdaVisits = 0
 
 let active_event = "none" // "crisis_wolverine = 5x click speed, "tolmet" = remove some memes 
 
@@ -7,7 +27,8 @@ let _itemTemplate = {
     count: 0,
     cost: 1,
     level: 1,
-    creditsPerSecond: 1
+    creditsPerSecond: 1,
+    name: ""
 }
 
 let itemTracker = [
@@ -94,15 +115,137 @@ function NumberFormatter(number) {
     return number
 }
 
-// // --- NEW UTILITY: NORMALIZE IMAGE SCALE ---
-// function normalizeImageScale(img, targetWidth = 100, targetHeight = 100) {
-//     // Calculate the scale needed to achieve the target dimensions (e.g., 100x100)
-//     const scaleX = targetWidth / img.width;
-//     const scaleY = targetHeight / img.height;
+// --- NEW UTILITY: NORMALIZE IMAGE SCALE ---
+function normalizeImageScale(img, targetWidth = 100, targetHeight = 100) {
+    // Calculate the scale needed to achieve the target dimensions (e.g., 100x100)
+    const scaleX = targetWidth / img.width;
+    const scaleY = targetHeight / img.height;
     
-//     // Apply the scale factors directly to the fabric image object
-//     img.set({
-//         scaleX: scaleX,
-//         scaleY: scaleY
-//     });
-// }
+    // Apply the scale factors directly to the fabric image object
+    img.set({
+        scaleX: scaleX,
+        scaleY: scaleY
+    });
+}
+
+function startRandomIntervalLoop(task, min, max) {
+    // Configuration: Minutes converted to milliseconds
+    const MIN_MINUTES = min;
+    const MAX_MINUTES = max;
+    
+    const minDelay = MIN_MINUTES * 60 * 1000;
+    const maxDelay = MAX_MINUTES * 60 * 1000;
+
+    function scheduleNext() {
+        // Calculate a random time between minDelay and maxDelay
+        // Math.random() generates a float between 0 and 1
+        const randomTime = Math.floor(Math.random() * (maxDelay - minDelay + 1) + minDelay);
+
+        // Optional: Log when the next execution will happen (for debugging)
+        const nextTimeMinutes = (randomTime / 60000).toFixed(2);
+        console.log(`Next execution scheduled in ${nextTimeMinutes} minutes.`);
+
+        setTimeout(() => {
+            // 1. Execute the actual task
+            try {
+                task();
+            } catch (error) {
+                console.error("Error executing task:", error);
+            }
+        }, randomTime);
+    }
+
+    // Start the loop
+    scheduleNext();
+}
+
+function tolmet()
+{
+    const randomItem = Math.floor(Math.random() * itemTracker.length);
+    itemTracker[randomItem].count -= 5
+    if (itemTracker[randomItem].count < 0) {itemTracker[randomItem].count = 0}
+    console.log('no soul!', randomItem)
+    showRedAlert('TOLMET IS HERE!', `5 ${itemTracker[randomItem].name} are gone for good!`)
+    assets.storeItems[randomItem].fire('tolmet', {})
+    startRandomIntervalLoop(tolmet, 4, 7)
+}
+
+const minTime = 3
+const maxTime = 5
+function crisis()
+{
+    console.log('its a crisis!!')
+    
+    startRandomIntervalLoop(crisis, minTime * Math.pow(0.85, igdaVisits), 0.2 * Math.pow(0.85, igdaVisits))
+}
+
+function startEventTimers(){
+    // tolmet timer
+    startRandomIntervalLoop(tolmet, 0, 0)
+    startRandomIntervalLoop(crisis, 0.1, 0.1)
+}
+
+function showRedAlert(messageText, subtext) {
+    // 1. Create the Text Object
+    const t1 = new fabric.Text(messageText, {
+        fontSize: 40,
+        fontFamily: 'Arial',
+        fontWeight: 'bold',
+        fill: '#ff0000',      // Bright Red
+        stroke: '#8b0000',    // Dark Red Outline for readability
+        strokeWidth: 1,
+        originX: 'center',
+        top: 0,
+        shadow: new fabric.Shadow({ color: 'black', blur: 10, offsetX: 0, offsetY: 0 })
+    });
+    const t2 = new fabric.Text(subtext, {
+        fontSize: 40,
+        fontFamily: 'Arial',
+        fontWeight: 'bold',
+        fill: '#ff0000',      // Bright Red
+        stroke: '#8b0000',    // Dark Red Outline for readability
+        strokeWidth: 1,
+        originX: 'center',
+        top: 50,
+        shadow: new fabric.Shadow({ color: 'black', blur: 10, offsetX: 0, offsetY: 0 })
+    });
+
+    const g = new fabric.Group([t1, t2], {
+        originX: 'center',    // Center horizontally
+        originY: 'top',       // Align to top edge
+        left: canvas.width / 2,
+        top: 50,              // 50px down from the top
+        opacity: 0,           // Start invisible
+        selectable: false,    // User can't drag it
+        evented: false,       // Clicks pass through it
+    })
+
+    // canvas.add(alertText);
+    canvas.add(g);
+    // canvas.bringToFront(alertText); // Ensure it sits on top of UI
+    canvas.bringToFront(g); // Ensure it sits on top of UI
+
+    // 2. Fade In Animation
+    g.animate('opacity', 1, {
+        duration: 500, // 0.5 seconds to fade in
+        onChange: canvas.renderAll.bind(canvas),
+        
+        // 3. Wait 3 Seconds
+        onComplete: () => {
+            setTimeout(() => {
+                
+                // 4. Fade Out Animation
+                g.animate('opacity', 0, {
+                    duration: 1000, // 1 second to fade out
+                    onChange: canvas.renderAll.bind(canvas),
+                    
+                    // 5. Cleanup (Remove from memory/canvas)
+                    onComplete: () => {
+                        canvas.remove(alertText);
+                    }
+                });
+                
+            }, 3000); // 3000ms = 3 seconds wait
+        }
+    });
+}

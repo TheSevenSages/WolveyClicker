@@ -32,25 +32,6 @@
         backgroundColor: '#26285D'
     });
 
-    const assetUrls = {
-        wolvey: 'images.png',
-        meme1: 'images.png',
-        meme2: 'images.png',
-        meme3: 'images.png',
-        meme4: 'images.png',
-        meme5: 'images.png',
-        swolvey: 'images.png',
-        igda: 'images.png'
-    };
-
-    // Game State
-    const assets = {
-        wolvey: null,
-        storeItems: [],
-        powerUps: [],
-        images: {}
-    };
-
     // UI Constants
     const COLORS = {
         leftBg: '#1a232e', // Dark Blue
@@ -144,6 +125,7 @@
     function createStoreItem(name, price, creditsPerSecond, iconImg, flavorTxt, index) {
         itemTracker[index].cost = price
         itemTracker[index].creditsPerSecond = creditsPerSecond
+        itemTracker[index].name = name
 
         const height = 100;
         const padding = 10;
@@ -165,6 +147,7 @@
             scaleX: 0.2,
             scaleY: 0.2
         });
+        normalizeImageScale(icon, 60, 60)
 
         // Name
         const nameText = new fabric.Text(name, {
@@ -192,7 +175,7 @@
             fontStyle: "italic",
             fill: COLORS.text,
             left: 10,
-            top: 65
+            top: 70
         });
 
         // Count
@@ -261,6 +244,10 @@
             // increase cost
             itemTracker[index].cost = Math.ceil(itemTracker[index].cost * 1.15)
             priceText.set('text', `MDP: ${NumberFormatter(itemTracker[index].cost)}`)
+            canvas.requestRenderAll();
+        });
+        group.on('tolmet', function() {
+            countText.set('text', `x${NumberFormatter(itemTracker[index].count)}`)
             canvas.requestRenderAll();
         });
 
@@ -356,27 +343,27 @@
             crossOrigin: "anonymous",
             left: 10,
             top: 5,
-            scaleX: 0.35,
-            scaleY: 0.35
+            originX: "left"
         });
+        normalizeImageScale(icon, 80, 65)
 
         // Price
         const priceText = new fabric.Text(`${NumberFormatter(price)}`, {
             fontFamily: 'Arial',
             fontSize: 16,
             fill: COLORS.text,
-            left: 0,
-            top: height
+            left: 5,
+            top: 70
         });
 
         // Flavor
-        const flavorText = new fabric.Text(`\"${description}\"`, {
+        const flavorText = new fabric.Text(`${description}`, {
             fontFamily: 'Arial',
             fontSize: 8,
             fontStyle: "italic",
             fill: COLORS.text,
-            left: 35,
-            top: height
+            left: 37,
+            top: 75
         });
 
         // Group them
@@ -416,11 +403,11 @@
 
     // Using the generated image ID or a placeholder
     function setupMainClicker(clickerImg) {
-        const fabricObj = new fabric.Image(clickerImg, {
+        let fabricObj = new fabric.Image(clickerImg, {
             crossOrigin: "anonymous"
         })
         assets.wolvey = fabricObj;
-        
+
         fabricObj.set({
             originX: 'center',
             originY: 'center',
@@ -466,7 +453,7 @@
 
         fabricObj.on('mouseout', () => {
              // Calculate correct return scale based on layout rules
-             const w = canvas.width;
+            const w = canvas.width;
             const h = canvas.height;
             const leftW = w * 0.30;
             
@@ -691,10 +678,12 @@
             })
             createPowerUp(`IGDA lv${i}`, Math.pow(50, i), "Yarger likes that :)", assets.images["igda"], () => {
                 console.log('IGDA BOUGHT!')
+                igdaVisits++
             })
         }
 
         assets.bgBars = createSpinningBars()
+        startEventTimers()
         renderLayout();
     })
     // Listen to resize
