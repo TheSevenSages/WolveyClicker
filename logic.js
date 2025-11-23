@@ -32,3 +32,9 @@ function CalculateUpgradeCost(itemIndex)
 {
     return Math.pow(10, itemIndex + 1) * Math.pow(5, itemTracker[itemIndex].level)
 }
+
+function NumberFormatter() {
+    // If # > 999 format as # / 1000 + k
+    // If # > 999,999 format as # / 1,000,000 + m
+    // If # > 999,999,999 format as # / 1,000,000,000 + b
+}

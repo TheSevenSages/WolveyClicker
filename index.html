@@ -23,11 +23,12 @@
 </body>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
 <script src="logic.js"></script>
+<script src="styling.js"></script>
 <script>
     const canvas = new fabric.Canvas('c', {
         selection: false, // Disable the blue group selection box globally
         hoverCursor: 'default',
-        backgroundColor: '#000000'
+        backgroundColor: '#26285D'
     });
 
     const assetUrls = {
@@ -50,13 +51,14 @@
     const COLORS = {
         leftBg: '#1a232e', // Dark Blue
         midBg: '#0d1218',  // Darker Blue/Black
-        rightBg: '#1a232e', // Dark Blue
-        text: '#ffffff',
+        rightBg: '#F6CF47',
+        text: '#26285D',
         accent: '#66cdaa',
-        storeHover: '#2a3542',
-        storeBg: '#1a232e',
-        upgradeBg: '#a30b0b',
-        upgradeHover: '#e87979'
+        storeHover: '#f8da6d',
+        storeBg: '#F6CF47',
+        storeClick: '#dbae0a',
+        upgradeBg: '#424eb9',
+        upgradeHover: '#6F76B4'
     };
 
     /**
@@ -96,11 +98,11 @@
 
     // 1. Background Panels (Visual separation)
     const panelMid = new fabric.Rect({ left: 0, top: 0, fill: COLORS.midBg, selectable: false, evented: false });
-    const panelRight = new fabric.Rect({ left: 0, top: 0, fill: COLORS.rightBg, selectable: false, evented: false });
+    const panelRight = new fabric.Rect({ left: 0, top: 0, fill: COLORS.rightBg, opacity: 0.6, selectable: false, evented: false });
     // Divider lines
     const div2 = new fabric.Rect({ top: 0, width: 6, fill: 'rgba(0,0,0,0.5)', selectable: false, evented: false });
 
-    canvas.add(panelMid, panelRight, div2);
+    canvas.add(panelRight, div2);
 
     // 2. Score Text
     const scoreLabel = new fabric.Text('0 MDP Credits', {
@@ -124,10 +126,10 @@
 
     // 3. Store Title
     const storeTitle = new fabric.Text('STORE', {
-        fontFamily: 'Arial, sans-serif',
+        fontFamily: 'Comic Sans MS, Arial, sans-serif',
         fontSize: 24,
         fontWeight: 'bold',
-        fill: COLORS.accent,
+        fill: COLORS.text,
         selectable: false,
         evented: false
     });
@@ -164,7 +166,7 @@
         const nameText = new fabric.Text(name, {
             fontFamily: 'Arial',
             fontSize: 20,
-            fill: '#fff',
+            fill: COLORS.text,
             left: 70,
             top: 10,
             fontWeight: 'bold'
@@ -174,7 +176,7 @@
         const priceText = new fabric.Text(`📝 ${price}`, {
             fontFamily: 'Arial',
             fontSize: 16,
-            fill: '#66cdaa',
+            fill: COLORS.text,
             left: 70,
             top: 35
         });
@@ -184,7 +186,7 @@
             fontFamily: 'Arial',
             fontSize: 12,
             fontStyle: "italic",
-            fill: '#66cdaa',
+            fill: COLORS.text,
             left: 10,
             top: 65
         });
@@ -194,7 +196,7 @@
             fontFamily: 'Arial',
             fontSize: 35,
             fontStyle: "bold",
-            fill: '#66cdaa',
+            fill: COLORS.text,
             left: 160,
             top: 20
         });
@@ -204,7 +206,7 @@
             fontFamily: 'Arial',
             fontSize: 12,
             fontStyle: "bold",
-            fill: '#66cdaa',
+            fill: COLORS.text,
             left: 0,
             top: 0
         });
@@ -241,7 +243,7 @@
             if (opt.subTargets && opt.subTargets.includes(upgradeButton)) {
                 return; // STOP HERE. Do not run the code below.
             }
-            bg.set('fill', '#444');
+            bg.set('fill', COLORS.storeClick);
             canvas.requestRenderAll();
         });
         group.on('mouseup', (opt) => {
@@ -455,6 +457,15 @@
             assets.wolvey.setCoords()
         }
 
+        if (assets.bgBars) {
+            assets.bgBars.set({
+                    left: (leftW + midW) / 2,
+                    top: h / 2
+            });
+            // Ensure the bars are placed behind everything else
+            canvas.sendToBack(assets.bgBars);
+        }
+
         // 5. Position Score (Above Cookie)
         scoreLabel.set({
             left: (leftW + midW) / 2,
@@ -466,6 +477,8 @@
             originX: 'center',
             top: h * 0.15 + 50
         });
+        canvas.bringToFront(cpsLabel)
+        canvas.bringToFront(scoreLabel)
 
         // 6. Position Store (Right Panel)
         storeTitle.set({
@@ -518,6 +531,8 @@
         createStoreItem("MEME3", 1100, 8, assets.images["meme3"], "funny quote", 2);
         createStoreItem("MEME4", 12000, 47, assets.images["meme4"], "funny quote", 3);
         createStoreItem("MEME5", 130000, 260, assets.images["meme5"], "funny quote", 4);
+
+        assets.bgBars = createSpinningBars()
         renderLayout();
     })
     // Listen to resize
@@ -530,13 +545,11 @@
         // Update score label
         scoreLabel.set('text', `${Math.floor(mdpCount)} MDP Credits`);
 
-        console.log(Math.floor(timestamp % 500))
         // Update credits per second label
         if (lastTimeStamp != -1)
         {
             if (timestamp - lastTimeStamp > 250)
             {
-                console.log("cps")
                 const deltaTimeSeconds = 1000 / (timestamp - lastTimeStamp)
                 const totalCreditsPerSecond = (mdpCount - lastCreditCount) * deltaTimeSeconds;
                 cpsLabel.set('text', `per second: ${Math.floor(totalCreditsPerSecond)}`);
