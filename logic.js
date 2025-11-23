@@ -8,7 +8,7 @@ const assetUrls = {
     swolvey: 'images.png',
     igda: 'images.png',
     tolmet: 'tolmet.webp',
-    crisis: 'images.png'
+    crisis: 'crisis.png'
 };
 
 // Game State
