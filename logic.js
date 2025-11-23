@@ -1,12 +1,12 @@
 const assetUrls = {
     wolvey: 'images.png',
     meme1: 'carrot.png',
-    meme2: 'images.png',
-    meme3: 'images.png',
-    meme4: 'images.png',
-    meme5: 'images.png',
+    meme2: 'booze.jpeg',
+    meme3: 'aman.jpg',
+    meme4: 'wav.png',
+    meme5: 'suffer.jpg',
     swolvey: 'swol.png',
-    igda: 'images.png',
+    igda: 'igda.png',
     tolmet: 'tolmet.webp',
     crisis: 'crisis.png',
     outofstock: 'oos.png'
