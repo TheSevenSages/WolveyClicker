@@ -8,7 +8,8 @@ const assetUrls = {
     swolvey: 'swol.png',
     igda: 'images.png',
     tolmet: 'tolmet.webp',
-    crisis: 'crisis.png'
+    crisis: 'crisis.png',
+    outofstock: 'oos.png'
 };
 
 // Game State
@@ -169,7 +170,13 @@ function tolmet()
         startRandomIntervalLoop(tolmet, 1 , 2)
         return
     }
-    const randomItem = Math.floor(Math.random() * itemTracker.length);
+    let randomItem = Math.floor(Math.random() * itemTracker.length);
+    i = 0
+    while (itemTracker[randomItem].count <= 0){
+        if (i >= 5) {return}
+        randomItem = Math.floor(Math.random() * itemTracker.length)
+        i += 1
+    }
     itemTracker[randomItem].count -= 5
     if (itemTracker[randomItem].count < 0) {itemTracker[randomItem].count = 0}
     triggerImageChaos(assets.images.tolmet, 20, 5000, haha)
@@ -200,7 +207,7 @@ function crisis()
 
 function startEventTimers(){
     // tolmet timer
-    startRandomIntervalLoop(tolmet, 0, 0)
+    startRandomIntervalLoop(tolmet, 2, 4)
     startRandomIntervalLoop(crisis, 3, 5)
 }
 

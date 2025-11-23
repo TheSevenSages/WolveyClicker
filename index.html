@@ -141,6 +141,18 @@
             strokeWidth: 1
         });
 
+        // Locked
+        const locked = new fabric.Rect({
+            width: 280, // Will be resized in layout
+            height: height - padding,
+            fill: '#444',
+            opacity: 0.5,
+            rx: 5, ry: 5,
+            stroke: '#333',
+            strokeWidth: 1,
+            evented: false
+        });
+
         const icon = new fabric.Image(iconImg, {
             crossOrigin: "anonymous",
             left: 10,
@@ -203,7 +215,7 @@
         const upgradeButton = createUpgradeButton(index, cpsText)
 
         // Group them
-        const group = new fabric.Group([bg, icon, nameText, priceText, flavorText, countText, cpsText, upgradeButton], {
+        const group = new fabric.Group([bg, icon, nameText, priceText, flavorText, countText, cpsText, upgradeButton, locked], {
             left: 0, // Set in layout
             top: 0,  // Set in layout
             selectable: false, // LOCKED: User can't move the button
@@ -215,9 +227,10 @@
         // Custom properties for logic
         group.origFill = COLORS.storeBg;
         
+        let buyable = false;
         // Add interaction
         group.on('mouseover', (opt) => {
-            if (opt.subTargets && opt.subTargets.includes(upgradeButton)) {
+            if (!buyable || (opt.subTargets && opt.subTargets.includes(upgradeButton))) {
                 return; // STOP HERE. Do not run the code below.
             }
             bg.set('fill', COLORS.storeHover);
@@ -228,16 +241,17 @@
             canvas.requestRenderAll();
         });
         group.on('mousedown', (opt) => {
-            if (opt.subTargets && opt.subTargets.includes(upgradeButton)) {
+            if (!buyable || (opt.subTargets && opt.subTargets.includes(upgradeButton))) {
                 return; // STOP HERE. Do not run the code below.
             }
             bg.set('fill', COLORS.storeClick);
             canvas.requestRenderAll();
         });
         group.on('mouseup', (opt) => {
-            if (opt.subTargets && opt.subTargets.includes(upgradeButton)) {
+            if (!buyable || (opt.subTargets && opt.subTargets.includes(upgradeButton))) {
                 return; // STOP HERE. Do not run the code below.
             }
+            mdpCount -= itemTracker[index].cost
 
             bg.set('fill', COLORS.storeHover);
             // increase count
@@ -252,6 +266,21 @@
             canvas.requestRenderAll();
         });
 
+        function up(){
+            if (mdpCount >= itemTracker[index].cost){
+                locked.set('opacity', 0.0)
+                buyable = true
+            }
+            else
+            {
+                locked.set('opacity', 0.5)
+                buyable = false
+            }
+            fabric.util.requestAnimFrame(up)
+            canvas.requestRenderAll();
+        }
+        fabric.util.requestAnimFrame(up);
+
         assets.storeItems.push(group);
         canvas.add(group);
     }
@@ -265,6 +294,18 @@
             rx: 5, ry: 5,
             stroke: '#333',
             strokeWidth: 1
+        });
+
+        // Locked
+        const locked = new fabric.Rect({
+            width: 50, // Will be resized in layout
+            height: 75,
+            fill: '#444',
+            opacity: 0.5,
+            rx: 5, ry: 5,
+            stroke: '#333',
+            strokeWidth: 1,
+            evented: false
         });
 
         // level
@@ -288,7 +329,7 @@
         });
 
         // Group them
-        const group = new fabric.Group([bg, level, upgradeCost], {
+        const group = new fabric.Group([bg, level, upgradeCost, locked], {
             left: 225, // Set in layout
             top: 7.5,  // Set in layout
             selectable: false, // LOCKED: User can't move the button
@@ -297,6 +338,7 @@
             name: 'upgradeButton'
         });
 
+        let buyable = false;
          // Add interaction
         group.on('mouseover', () => {
             bg.set('fill', COLORS.upgradeHover);
@@ -312,23 +354,40 @@
         });
         group.on('mouseup', () => {
             bg.set('fill', COLORS.upgradeHover);
+            if (!buyable) {return}
 
             itemTracker[itemIndex].creditsPerSecond *= 2
             cpstext.set('text', `${NumberFormatter(itemTracker[itemIndex].creditsPerSecond)}/s`)
+
+            mdpCount -= CalculateUpgradeCost(itemIndex)
 
             level.set('text', `LEVEL\n${NumberFormatter(++itemTracker[itemIndex].level)}`)
             upgradeCost.set('text', `${NumberFormatter(CalculateUpgradeCost(itemIndex))}`)
             canvas.requestRenderAll();
         });
 
+        function up(){
+            if (mdpCount >= CalculateUpgradeCost(itemIndex)){
+                locked.set('opacity', 0.0)
+                buyable = true
+            }
+            else
+            {
+                locked.set('opacity', 0.5)
+                buyable = false
+            }
+            fabric.util.requestAnimFrame(up)
+            canvas.requestRenderAll();
+        }
+        fabric.util.requestAnimFrame(up);
+
         return group
     }
 
-    function createPowerUp(name, price, description, iconImg, onpurchase) {
+    function createPowerUp(name, price, description, iconImg, level, onpurchase) {
         const height = 100;
         const padding = 10;
         const index = assets.powerUps.length
-        console.log(index)
         
         // Container Box
         const bg = new fabric.Rect({
@@ -340,6 +399,18 @@
             strokeWidth: 1
         });
 
+        // Locked
+        const locked = new fabric.Rect({
+            width: 100, // Will be resized in layout
+            height: height - padding,
+            fill: '#444',
+            opacity: 0.5,
+            rx: 5, ry: 5,
+            stroke: '#333',
+            strokeWidth: 1,
+            evented: false
+        });
+
         const icon = new fabric.Image(iconImg, {
             crossOrigin: "anonymous",
             left: 10,
@@ -347,6 +418,15 @@
             originX: "left"
         });
         normalizeImageScale(icon, 80, 65)
+
+        const outofstock = new fabric.Image(assets.images['outofstock'], {
+            crossOrigin: "anonymous",
+            left: 10,
+            top: 5,
+            originX: "left",
+            opacity: 0.0
+        });
+        normalizeImageScale(outofstock, 80, 65)
 
         // Price
         const priceText = new fabric.Text(`${NumberFormatter(price)}`, {
@@ -368,7 +448,7 @@
         });
 
         // Group them
-        const group = new fabric.Group([bg, icon, priceText, flavorText], {
+        const group = new fabric.Group([bg, icon, priceText, flavorText, locked, outofstock], {
             left: 0, // Set in layout
             top: 0,  // Set in layout
             selectable: false, // LOCKED: User can't move the button
@@ -377,7 +457,9 @@
             name: 'powerUpButton'
         });
 
-                // Add interaction
+        let buyable = false;
+        let purchased = false;
+        // Add interaction
         group.on('mouseover', (opt) => {
             bg.set('fill', COLORS.storeHover);
             canvas.requestRenderAll();
@@ -392,9 +474,34 @@
         });
         group.on('mouseup', (opt) => {
             bg.set('fill', COLORS.storeHover);
-            onpurchase()
+            if (!buyable) {return}
+            onpurchase(level)
+            purchased = true
+            mdpCount -= price
             canvas.requestRenderAll();
         });
+
+        function up(){
+            if (mdpCount >= price){
+                locked.set('opacity', 0.0)
+                buyable = true
+            }
+            else
+            {
+                locked.set('opacity', 0.5)
+                buyable = false
+            }
+            if (!purchased)
+            {
+                fabric.util.requestAnimFrame(up)
+            }
+            else {
+                locked.set('opacity', 0.75)
+                outofstock.set('opacity', 1)
+            }
+            canvas.requestRenderAll();
+        }
+        fabric.util.requestAnimFrame(up);
 
         assets.powerUps.push(group)
         canvas.add(group)
@@ -674,12 +781,13 @@
         // Create power ups
         for (i = 1; i < 4; i++)
         {
-            createPowerUp(`Swolvey lv${i}`, Math.pow(50, i), "Powers up clicks", assets.images["swolvey"], () => {
+            createPowerUp(`Swolvey lv${i}`, Math.pow(50, i), "Powers up clicks", assets.images["swolvey"], i, (num) => {
                 console.log('SWOLVEY BOUGHT!')
+                creditsPerClick = Math.pow(5, num)
             })
-            createPowerUp(`IGDA lv${i}`, Math.pow(50, i), "Yarger likes that :)", assets.images["igda"], () => {
+            createPowerUp(`IGDA lv${i}`, Math.pow(50, i), "Yarger likes that :)", assets.images["igda"], i, (num) => {
                 console.log('IGDA BOUGHT!')
-                igdaVisits++
+                igdaVisits += num
             })
         }
 
