@@ -158,7 +158,7 @@ function triggerSineImageFlow(imgElement, numRows = 5, duration = 6000, lanes = 
  * @param {number} count - How many images to spawn (default 20).
  * @param {number} duration - How long (ms) they last (default 5000ms).
  */
-function triggerImageChaos(imgElement, count = 20, duration = 5000) {
+function triggerImageChaos(imgElement, count = 20, duration = 5000, bounceSound) {
     const particles = [];
     const canvasWidth = canvas.width;
     const canvasHeight = canvas.height;
@@ -223,9 +223,15 @@ function triggerImageChaos(imgElement, count = 20, duration = 5000) {
             // Bounce off walls
             if (p.left < 0 || p.left > canvas.width) {
                 p.velocity.x *= -1;
+                if (bounceSound){
+                    bounceSound.play()
+                }
             }
             if (p.top < 0 || p.top > canvas.height) {
                 p.velocity.y *= -1;
+                if (bounceSound){
+                    bounceSound.play()
+                }
             }
 
             // Fade out in the last 20% of the duration

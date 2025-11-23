@@ -19,6 +19,8 @@ const assets = {
     images: {}
 };
 
+const haha = new Audio('haha.mp3')
+
 let mdpCount = 0;
 let creditsPerClick = 1;
 let igdaVisits = 0
@@ -170,7 +172,7 @@ function tolmet()
     const randomItem = Math.floor(Math.random() * itemTracker.length);
     itemTracker[randomItem].count -= 5
     if (itemTracker[randomItem].count < 0) {itemTracker[randomItem].count = 0}
-    triggerImageChaos(assets.images.tolmet, 20)
+    triggerImageChaos(assets.images.tolmet, 20, 5000, haha)
     showRedAlert('TOLMET IS HERE!', `5 ${itemTracker[randomItem].name} are gone for good!`, '#ff0000', '#8b0000')
     assets.storeItems[randomItem].fire('tolmet', {})
     startRandomIntervalLoop(tolmet, 4, 7)
@@ -198,8 +200,8 @@ function crisis()
 
 function startEventTimers(){
     // tolmet timer
-    startRandomIntervalLoop(tolmet, 2, 4)
-    startRandomIntervalLoop(crisis, 0, 0)
+    startRandomIntervalLoop(tolmet, 0, 0)
+    startRandomIntervalLoop(crisis, 3, 5)
 }
 
 function showRedAlert(messageText, subtext, color1, color2) {
@@ -258,7 +260,7 @@ function showRedAlert(messageText, subtext, color1, color2) {
                     
                     // 5. Cleanup (Remove from memory/canvas)
                     onComplete: () => {
-                        canvas.remove(alertText);
+                        canvas.remove(g);
                     }
                 });
                 
